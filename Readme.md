@@ -1,3 +1,4 @@
-Please check branches, each branch has terraform code for different scenarios.
-
-Read the readme file in each branch to understand what is it doing.
+Steps to use this code:
+1. Download the code on your local machine.
+2. Switch to this branch.
+3. 
