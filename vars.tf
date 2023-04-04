@@ -18,3 +18,7 @@ variable "AMIS" {
     eu-west-1 = "ami-844e0bf7"
   }
 }
+
+variable "INSTANCE_DEVICE_NAME" {
+  default = "/dev/xvdh"
+}
