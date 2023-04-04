@@ -1,7 +1,9 @@
 variable "AWS_ACCESS_KEY" {
+  default = "AKIAZFSH2TVGQPY7M56W"
 }
 
 variable "AWS_SECRET_KEY" {
+  default = "e9rSHLRQ1j8zp8HBgal0NyA1Cgq/ok+WZMIDVXZX"
 }
 
 variable "AWS_REGION" {
@@ -17,3 +19,15 @@ variable "AMIS" {
   }
 }
 
+
+variable "PATH_TO_PRIVATE_KEY" {
+  default = "id_rsa"
+}
+
+variable "PATH_TO_PUBLIC_KEY" {
+  default = "id_rsa.pub"
+}
+
+variable "INSTANCE_USERNAME" {
+  default = "ec2-user"
+}
