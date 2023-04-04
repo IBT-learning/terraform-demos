@@ -26,30 +26,37 @@ resource "aws_network_interface" "foo" {
   }
 }
 
-resource "aws_instance" "foo" {
-  ami           = lookup(var.AMIS, var.AWS_REGION, "") # last parameter is the default value
-  instance_type = "t3.micro"
+
+resource "aws_key_pair" "mykey" {
+  key_name   = "mykey"
+  public_key = file(var.PATH_TO_PUBLIC_KEY)
+}
+
+resource "aws_instance" "example" {
+  ami           = var.AMIS[var.AWS_REGION]
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.mykey.key_name
 
   network_interface {
     network_interface_id = aws_network_interface.foo.id
     device_index         = 0
   }
 
-  credit_specification {
-    cpu_credits = "unlimited"
+  provisioner "file" {
+    source      = "script.sh"
+    destination = "/tmp/script.sh"
   }
-}
-
-
-
-output "ip" {
-  value = aws_instance.foo.private_ip
-}
-
-output "instance_state" {
-  value = aws_instance.foo.instance_state
-}
-
-output "instance_arn" {
-  value = aws_instance.foo.arn
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/script.sh",
+      "sudo sed -i -e 's/\r$//' /tmp/script.sh",  # Remove the spurious CR characters.
+      "sudo /tmp/script.sh",
+    ]
+  }
+  connection {
+    host        = coalesce(self.private_ip)
+    type        = "ssh"
+    user        = var.INSTANCE_USERNAME
+    private_key = file(var.PATH_TO_PRIVATE_KEY)
+  }
 }
