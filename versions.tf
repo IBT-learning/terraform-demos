@@ -1,13 +1,11 @@
 terraform {
-  required_version = ">= 0.12"
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 4.16"
+    }
+  }
+
+  required_version = ">= 1.2.0"
 }
 
-terraform {
-    backend "s3" {
-    bucket = "<CREATE_A_BUCKET_AND_UPDATE_NAME_HERE"
-    key    = "path/to/my/key"
-    region = "us-east-1"
-    access_key = "YOUR_ACCESS_KEY"
-    secret_key = "YOUR_SECRET_KEY"
-  }
-}
