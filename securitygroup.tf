@@ -1,19 +1,24 @@
-data "aws_ip_ranges" "european_ec2" {
-  regions  = ["eu-west-1", "eu-central-1"]
-  services = ["ec2"]
+data "aws_ami" "ubuntu" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["099720109477"] # Canonical
 }
 
-resource "aws_security_group" "from_europe" {
-  name = "from_europe"
+resource "aws_instance" "web" {
+  ami           = data.aws_ami.ubuntu.id
+  instance_type = "t2.micro"
 
-  ingress {
-    from_port   = "443"
-    to_port     = "443"
-    protocol    = "tcp"
-    cidr_blocks = slice(data.aws_ip_ranges.european_ec2.cidr_blocks, 0, 50)
-  }
   tags = {
-    CreateDate = data.aws_ip_ranges.european_ec2.create_date
-    SyncToken  = data.aws_ip_ranges.european_ec2.sync_token
+    Name = "HelloWorld"
   }
 }
