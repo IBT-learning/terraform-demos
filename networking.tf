@@ -13,6 +13,7 @@ resource "aws_subnet" "my_subnet" {
   cidr_block        = "172.16.10.0/24"
   availability_zone = "us-west-1b"
   map_public_ip_on_launch = true
+  depends_on = [aws_vpc.my_vpc]
 
   tags = {
     Name = "pub-subnet"
