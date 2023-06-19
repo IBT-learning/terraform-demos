@@ -1,57 +1,58 @@
-resource "aws_vpc" "my_vpc" {
-  cidr_block = "172.16.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support = true
+resource "aws_key_pair" "my_key" {
+  key_name = "my_key"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+#data source
+data "aws_ami" "ubuntu" {
+  most_recent = true
 
-  tags = {
-    Name = "ec2-vpc"
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server-*"]
   }
-}
 
-resource "aws_subnet" "my_subnet" {
-  vpc_id            = aws_vpc.my_vpc.id
-  cidr_block        = "172.16.10.0/24"
-  availability_zone = "us-east-1a"
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "pub-subnet"
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
   }
-}
 
-resource "aws_internet_gateway" "my_internet_gateway" {
-  vpc_id = aws_vpc.my_vpc.id
-  tags = {
-    Name = "dev-igw"
-  }
+  owners = ["099720109477"] # Canonical
 }
-
-resource "aws_route_table" "my_public_rt"{
-  vpc_id = aws_vpc.my_vpc.id
-  tags = {
-    Name = "dev-rt"
-  }
-}
-
-resource "aws_route" "default_route" {
-  route_table_id = aws_route_table.my_public_rt.id
-  destination_cidr_block = "0.0.0.0/0"
-  gateway_id = aws_internet_gateway.my_internet_gateway.id
-}
-
-resource "aws_route_table_association" "my_public_assoc"{
-  subnet_id = aws_subnet.my_subnet.id
-  route_table_id = aws_route_table.my_public_rt.id
-}
-
 
 resource "aws_instance" "foo" {
-  ami           = lookup(var.AMIS, var.AWS_REGION, "") # last parameter is the default value
+  ami           = data.aws_ami.ubuntu.id
   instance_type = "t2.micro"
+  vpc_security_group_ids = [aws_security_group.my_sg.id]
+  subnet_id = aws_subnet.my_subnet.id
+  key_name = aws_key_pair.my_key.id
 
+  provisioner "file" {
+    source      = "script.sh"
+    destination = "/tmp/script.sh"
+  }
+  provisioner "local-exec" {
+    command = "echo ${aws_instance.foo.private_ip} >> private_ips.txt"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "chmod +x /tmp/script.sh",
+      "sudo sed -i -e 's/\r$//' /tmp/script.sh", # Remove the spurious CR characters.
+      "sudo /tmp/script.sh",
+    ]
+  }
+  connection {
+    host        = self.public_ip
+    type        = "ssh"
+    user        = var.INSTANCE_USERNAME
+    private_key = file("~/.ssh/id_rsa")
+    timeout = "2m"
+  }
+
+  tags = {
+    Name = "ibt-ec2"
+  }
 }
-
-
 
 output "ip" {
   value = aws_instance.foo.private_ip

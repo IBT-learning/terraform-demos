@@ -11,3 +11,7 @@ variable "AMIS" {
   }
 }
 
+variable "INSTANCE_USERNAME" {
+  default = "ubuntu"
+}
+
